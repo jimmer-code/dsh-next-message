@@ -141,7 +141,14 @@ async function catalog(ctx) {
   for (const provider of providers) {
     if (provider === null || typeof provider.id !== 'string') continue
     try {
-      const models = await ctx.llm.listModels(provider.id)
+      // An adapter may probe a remote endpoint; bound the catalog so one slow
+      // provider cannot hold the settings page open.
+      const models = await Promise.race([
+        ctx.llm.listModels(provider.id),
+        new Promise((_resolve, reject) => {
+          setTimeout(() => { reject(new Error('catalog timeout')) }, 5000).unref?.()
+        }),
+      ])
       out.push({
         id: provider.id,
         name: typeof provider.name === 'string' && provider.name !== '' ? provider.name : provider.id,
