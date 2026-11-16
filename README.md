@@ -6,6 +6,34 @@ asks a model to read the recent conversation and suggests what you are likely
 to send next. The suggestion appears as grey ghost text; press **Tab** to fill
 the draft. Nothing is sent automatically.
 
+## Install with an AI agent
+
+Copy the whole prompt below into an agent that can run commands and use the DSH
+**Plugins** page:
+
+```text
+请帮我把 https://github.com/jimmer-code/dsh-next-message 这个 DeepSeek Harness 插件装好：git clone 到工作区，进入目录运行 npm install、npm test、npm run check；然后在 DSH 的 Plugins → Add plugin 里选择这个本地目录，启用 dsh-next-message bundle；如果设置页没出现就重启一次 DSH；最后确认 Plugins → dsh-next-message 里有「启用预测 / 预测模型 / 显示位置」三项，并且空输入框在回合结束后能出现预测、按 Tab 能填入。
+```
+
+For an English-speaking agent:
+
+```text
+Install the DeepSeek Harness plugin at https://github.com/jimmer-code/dsh-next-message: clone it, run `npm install && npm test && npm run check`, install the local directory through Plugins → Add plugin, enable the `dsh-next-message` bundle, restart DSH once if its settings page does not appear, then verify the three settings and that an empty composer shows a suggestion after a turn and Tab fills it.
+```
+
+## Manual install
+
+```sh
+git clone https://github.com/jimmer-code/dsh-next-message.git
+cd dsh-next-message
+npm install
+npm test
+npm run check
+```
+
+Then open **Plugins → Add plugin** in DSH and choose the local directory.
+Reload the page; if the settings page does not appear, restart DSH once.
+
 ## What it does
 
 - Runs after a completed turn, only while the composer is empty, idle, and

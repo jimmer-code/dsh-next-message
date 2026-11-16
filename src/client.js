@@ -419,13 +419,13 @@ function create(require) {
       }, `${value.provider} · ${value.model}`))
     }
 
-    return h('div', { className: 'dsh-nm-settings' },
-      h('p', { className: 'dsh-nm-settings-desc' }, t('description')),
+    const currentPlacement = value.placement === 'below' ? 'below' : 'inline'
+    const row = (label, control) => h('div', { className: 'dsh-nm-row' },
+      h('div', { className: 'dsh-nm-row-label' }, label),
+      control)
 
-      h('div', { className: 'dsh-nm-row' },
-        h('div', { className: 'dsh-nm-row-text' },
-          h('div', { className: 'dsh-nm-row-label' }, t('enabled')),
-          h('div', { className: 'dsh-nm-row-hint' }, t('enabledHint'))),
+    return h('div', { className: 'dsh-nm-settings' },
+      row(t('enabled'),
         h('button', {
           type: 'button',
           role: 'switch',
@@ -436,10 +436,7 @@ function create(require) {
           onClick: () => { void save(() => form.set('enabled', value.enabled === false)) },
         }, h('span', { className: 'dsh-nm-switch-knob' }))),
 
-      h('div', { className: 'dsh-nm-row' },
-        h('div', { className: 'dsh-nm-row-text' },
-          h('div', { className: 'dsh-nm-row-label' }, t('model')),
-          h('div', { className: 'dsh-nm-row-hint' }, t('modelHint'))),
+      row(t('model'),
         h('select', {
           className: 'dsh-nm-select',
           'aria-label': t('model'),
@@ -450,20 +447,16 @@ function create(require) {
         h('option', { value: '' }, t('follow')),
         ...modelOptions)),
 
-      h('div', { className: 'dsh-nm-row' },
-        h('div', { className: 'dsh-nm-row-text' },
-          h('div', { className: 'dsh-nm-row-label' }, t('placement'))),
-        h('select', {
-          className: 'dsh-nm-select',
-          'aria-label': t('placement'),
-          value: value.placement === 'below' ? 'below' : 'inline',
-          disabled: disabled || busy,
-          onChange: (event) => {
-            void save(() => form.set('placement', event.target.value))
-          },
-        },
-        h('option', { value: 'inline' }, t('placementInline')),
-        h('option', { value: 'below' }, t('placementBelow')))),
+      row(t('placement'),
+        h('div', { className: 'dsh-nm-segmented', role: 'group', 'aria-label': t('placement') },
+          ['inline', 'below'].map(option => h('button', {
+            key: option,
+            type: 'button',
+            className: 'dsh-nm-segment',
+            'aria-pressed': currentPlacement === option,
+            disabled: disabled || busy,
+            onClick: () => { void save(() => form.set('placement', option)) },
+          }, t(option === 'inline' ? 'placementInline' : 'placementBelow'))))),
 
       h('div', { className: 'dsh-nm-settings-footer' },
         !writable ? h('span', { className: 'dsh-nm-settings-status' }, t('readOnly')) : null,

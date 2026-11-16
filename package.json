@@ -2,6 +2,15 @@
   "name": "dsh-next-message",
   "version": "0.1.0",
   "description": "Ghost-text next-message prediction for the DeepSeek Harness composer: a model reads the conversation, the input box shows the likely next user message, and Tab fills it in.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jimmer-code/dsh-next-message.git"
+  },
+  "homepage": "https://github.com/jimmer-code/dsh-next-message#readme",
+  "bugs": {
+    "url": "https://github.com/jimmer-code/dsh-next-message/issues"
+  },
+  "author": "Jimmy Zhang",
   "type": "module",
   "main": "index.js",
   "exports": {
