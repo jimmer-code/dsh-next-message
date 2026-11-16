@@ -42,7 +42,9 @@ Reload the page; if the settings page does not appear, restart DSH once.
 - Uses the session's own model by default. Pin a different provider/model in
   the plugin settings when you want a cheaper or faster predictor.
 - Fills the draft as one undoable edit. `Esc` dismisses the suggestion, and
-  typing anything hides it.
+  typing anything hides it. Accepting does not consume it: deleting the filled
+  text brings the same suggestion back until the turn ends, without another
+  model call.
 - Never appends to the session log, never sends a message, and shows no errors
   in the composer when a prediction fails.
 - Keeps the composer editable while the suggestion shows: the caret stays
