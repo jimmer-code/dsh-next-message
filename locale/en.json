@@ -17,5 +17,7 @@
   "suggestion": "Prediction",
   "fill": "Fill",
   "dismiss": "Dismiss suggestion",
-  "mobileToggle": "Predict"
+  "mobileToggleOn": "Predict on",
+  "mobileToggleOff": "Predict off",
+  "mobilePredicting": "Predicting…"
 }

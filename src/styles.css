@@ -122,6 +122,11 @@
   color: var(--dsw-alias-label-primary);
 }
 
+.dsh-nm-bar-mobile {
+  margin-bottom: 6px;
+  padding: 0 4px;
+}
+
 /* Composer-toolbar toggle, shown only on touch layouts. */
 .dsh-nm-mobile-toggle {
   display: inline-flex;

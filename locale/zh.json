@@ -18,5 +18,7 @@
   "suggestion": "预测",
   "fill": "填入",
   "dismiss": "关闭建议",
-  "mobileToggle": "预测"
+  "mobileToggleOn": "预测 开",
+  "mobileToggleOff": "预测 关",
+  "mobilePredicting": "预测中…"
 }

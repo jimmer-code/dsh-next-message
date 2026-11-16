@@ -89,16 +89,19 @@ test('client module registers the three intended slots', () => {
   assert.deepEqual(registrations.filter(entry => typeof entry === 'string'), [
     'conversation.input.overlay',
     'conversation.composer.dock',
+    'conversation.input.dock',
     'conversation.input.right',
     'plugins.bundle.config',
   ])
   const options = registrations.filter(entry => typeof entry === 'object')
-  assert.equal(options.length, 4)
+  assert.equal(options.length, 5)
   assert.equal(options[0].name, 'conversation.input.overlay')
   assert.equal(options[0].id, 'next-message')
   assert.equal(options[1].name, 'conversation.composer.dock')
-  assert.equal(options[2].name, 'conversation.input.right')
-  assert.equal(options[2].id, 'next-message-mobile-toggle')
-  assert.equal(options[3].name, 'plugins.bundle.config')
-  assert.equal(options[3].key, 'dsh-next-message')
+  assert.equal(options[2].name, 'conversation.input.dock')
+  assert.equal(options[2].id, 'next-message-mobile-bar')
+  assert.equal(options[3].name, 'conversation.input.right')
+  assert.equal(options[3].id, 'next-message-mobile-toggle')
+  assert.equal(options[4].name, 'plugins.bundle.config')
+  assert.equal(options[4].key, 'dsh-next-message')
 })

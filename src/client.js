@@ -95,9 +95,9 @@ function create(require) {
   function readMobileEnabled() {
     try {
       const raw = window.localStorage.getItem(MOBILE_KEY)
-      return raw === null ? true : raw !== '0'
+      return raw === '1'
     } catch (_error) {
-      return true
+      return false
     }
   }
 
@@ -183,6 +183,24 @@ function create(require) {
   function focusEditor(card) {
     const editor = card?.querySelector('[contenteditable="true"]')
     if (editor instanceof HTMLElement) editor.focus({ preventScroll: true })
+  }
+
+  /**
+   * Find the composer card that owns a bar, whether the bar sits above the card
+   * (mobile input dock) or below it (desktop composer dock).
+   * @param {Element | null | undefined} element - bar element.
+   * @returns {Element | null} the nearest enclosing composer card.
+   */
+  function findComposerCard(element) {
+    let node = element
+    while (node !== null && node !== undefined) {
+      if (typeof node.querySelector === 'function') {
+        const card = node.querySelector(CARD)
+        if (card !== null) return card
+      }
+      node = node.parentElement
+    }
+    return null
   }
 
   /**
@@ -406,7 +424,7 @@ function create(require) {
    * @returns {any} the slot content.
    */
   function BelowSuggestion(props) {
-    const { sessionId, useInput, inputActions, form, t } = props
+    const { sessionId, useInput, inputActions, form, surface = 'dock', t } = props
     const snapshot = useConfigForm(form)
     const settings = presentationOf(snapshot)
     const prediction = usePrediction(sessionId)
@@ -415,40 +433,40 @@ function create(require) {
     const draft = useInput(state => state.draft)
     const phase = useInput(state => state.phase)
     const attachments = useInput(state => state.attachmentIds.length)
-    const enabledHere = settings.enabled && (!touch || mobileEnabled)
-    const placementOk = touch ? true : settings.placement === 'below'
-    if (!enabledHere || !placementOk || prediction.status !== 'ready') return null
+    if (surface === 'input') {
+      if (!touch || !mobileEnabled) return null
+    } else if (touch) {
+      return null
+    }
+    if (!settings.enabled || prediction.status !== 'ready') return null
+    if (surface === 'dock' && settings.placement !== 'below') return null
     if (prediction.dismissed || draft !== '' || phase !== 'plain' || attachments > 0) return null
     const accept = (event) => {
-      event.preventDefault()
-      const dock = event.currentTarget.closest('[data-composer-dock]')
-      const card = dock?.parentElement?.querySelector(CARD) ?? null
       inputActions.setDraft(prediction.text)
-      focusEditor(card)
+      focusEditor(findComposerCard(event.currentTarget))
     }
-    const dismiss = (event) => {
-      event.preventDefault()
+    const dismiss = () => {
       publishPrediction(sessionId, {
         status: 'ready',
         text: prediction.text,
         dismissed: true,
       })
     }
-    return h('div', { className: 'dsh-nm-bar' },
+    return h('div', { className: surface === 'input' ? 'dsh-nm-bar dsh-nm-bar-mobile' : 'dsh-nm-bar' },
       h('span', { className: 'dsh-nm-bar-label' }, t('suggestion')),
-      h('button', { type: 'button', className: 'dsh-nm-bar-text', onMouseDown: accept }, prediction.text),
+      h('button', { type: 'button', className: 'dsh-nm-bar-text', onClick: accept }, prediction.text),
       h('span', { className: 'dsh-nm-bar-actions' },
         h('button', {
           type: 'button',
           className: 'dsh-nm-key dsh-nm-key-button',
-          onMouseDown: accept,
+          onClick: accept,
         }, touch ? t('fill') : 'Tab'),
         touch
           ? h('button', {
             type: 'button',
             className: 'dsh-nm-bar-close',
             'aria-label': t('dismiss'),
-            onMouseDown: dismiss,
+            onClick: dismiss,
           }, '×')
           : null))
   }
@@ -464,9 +482,13 @@ function create(require) {
     const snapshot = useConfigForm(form)
     const settings = presentationOf(snapshot)
     const mobileEnabled = useMobileEnabled()
+    const prediction = usePrediction(sessionId)
     if (!coarsePointer() || !settings.enabled) return null
-    const toggle = (event) => {
-      event.preventDefault()
+    const busy = mobileEnabled && prediction.status === 'loading'
+    const label = busy
+      ? t('mobilePredicting')
+      : t(mobileEnabled ? 'mobileToggleOn' : 'mobileToggleOff')
+    const toggle = () => {
       const next = !mobileEnabled
       setMobileEnabled(next)
       if (!next) publishPrediction(sessionId, IDLE)
@@ -474,10 +496,9 @@ function create(require) {
     return h('button', {
       type: 'button',
       className: 'dsh-nm-mobile-toggle',
-      'aria-label': t('mobileToggle'),
+      'aria-label': label,
       'aria-pressed': mobileEnabled,
-      title: t('mobileToggle'),
-      onMouseDown: (event) => { event.preventDefault() },
+      title: label,
       onClick: toggle,
     },
     h('svg', { viewBox: '0 0 16 16', width: 13, height: 13, 'aria-hidden': true },
@@ -485,7 +506,7 @@ function create(require) {
         d: 'M8 1.6 9.55 6.45 14.4 8 9.55 9.55 8 14.4 6.45 9.55 1.6 8 6.45 6.45Z',
         fill: 'currentColor',
       })),
-    h('span', { className: 'dsh-nm-mobile-toggle-text' }, t('mobileToggle')))
+    h('span', { className: 'dsh-nm-mobile-toggle-text' }, label))
   }
 
   /**
@@ -643,7 +664,15 @@ function create(require) {
       id: 'next-message-below',
       order: 20,
       locale: NS,
-      inject: injected,
+      inject: () => ({ form, surface: 'dock' }),
+    }, BelowSuggestion))
+
+    ctx.slots.inject('conversation.input.dock', () => ctx.slots.register({
+      name: 'conversation.input.dock',
+      id: 'next-message-mobile-bar',
+      order: 10,
+      locale: NS,
+      inject: () => ({ form, surface: 'input' }),
     }, BelowSuggestion))
 
     ctx.slots.inject('conversation.input.right', () => ctx.slots.register({
