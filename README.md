@@ -22,7 +22,7 @@
 github:jimmer-code/dsh-next-message
 ```
 
-点安装。DSH 会用 pnpm 安装这个包，并自动把 `dsh-next-message` 加进当前 profile 的插件包列表（通常也会自动启用）。装完刷新页面；如果设置页没出现，重启一次 DSH。
+点安装。DSH 会用 pnpm 安装这个包，并自动把 `dsh-next-message` 加进当前 profile 的插件包列表（通常也会自动启用）。**不需要先 `git clone`，也不需要手动 `npm install`。** 装完刷新页面；如果设置页没出现，重启一次 DSH。
 
 ### 命令行 / Web profile
 
@@ -30,7 +30,7 @@ github:jimmer-code/dsh-next-message
 dsh plugin --profile <profile> add github:jimmer-code/dsh-next-message
 ```
 
-`dsh plugin` 会把参数转发给 profile 目录里的 pnpm，并根据安装结果自动更新 `dsh.profile.bundles`。Desktop 的 profile 由桌面应用管理，不能用 CLI 装，请用上面的「插件 → 添加插件」。
+`dsh plugin` 会把参数转发给 profile 目录里的 pnpm，并根据安装结果自动更新 `dsh.profile.bundles`。Git/npm 地址不需要先 clone 或 `npm install`。Desktop 的 profile 由桌面应用管理，不能用 CLI 装，请用上面的「插件 → 添加插件」。
 
 ### 本地开发安装
 
