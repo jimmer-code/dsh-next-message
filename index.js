@@ -16,6 +16,7 @@ import {
   cleanPrediction,
   resolveRoute,
   selectHistory,
+  textOf,
 } from './src/core.js'
 
 export const inject = ['connection', 'sessions', 'llm']
@@ -66,7 +67,84 @@ function leastEffort(controls, model) {
 }
 
 /**
- * Produce one prediction for a live session.
+ * Read the recent conversation and the latest model route for one session.
+ * A live Session is preferred; a session the Host has not attached (for
+ * example one opened only from the mobile page) is read through Session Query
+ * so the mobile prediction works without loading an agent.
+ * @param {object} ctx - Host context.
+ * @param {string} sessionId - addressed session.
+ * @param {object} config - validated live plugin configuration.
+ * @param {AbortSignal} signal - request cancellation.
+ * @returns {Promise<{ history: { role: 'user' | 'assistant', text: string }[], route: object | undefined, seq: number } | null>} the source, or null.
+ */
+async function readHistory(ctx, sessionId, config, signal) {
+  const bounds = {
+    historyMessages: config.historyMessages,
+    maxInputChars: config.maxInputChars,
+  }
+  const session = ctx.sessions.get(sessionId)
+  if (session !== undefined) {
+    return {
+      history: selectHistory(session.deriveMessages(), bounds),
+      route: session.requestHeader()?.config,
+      seq: session.seq,
+    }
+  }
+
+  const query = typeof ctx.get === 'function' ? ctx.get('sessionQuery') : undefined
+  if (query === null || query === undefined || typeof query.observeSession !== 'function') return null
+  let observed
+  try {
+    observed = await query.observeSession(sessionId, { projectionMode: 'none', signal })
+    const events = observed?.events
+    if (!Array.isArray(events)) return null
+    const messages = []
+    let route
+    // The prediction only needs the tail; cap the backward scan so a long log
+    // costs constant work while still covering the last request header.
+    const floor = Math.max(0, events.length - 600)
+    for (let index = events.length - 1; index >= floor; index -= 1) {
+      const event = events[index]
+      if (event === null || typeof event !== 'object') continue
+      if (event.type === 'request/header') {
+        const candidate = event.data?.header?.config
+        if (route === undefined
+          && typeof candidate?.provider === 'string' && candidate.provider !== ''
+          && typeof candidate?.model === 'string' && candidate.model !== '') {
+          route = { provider: candidate.provider, model: candidate.model }
+        }
+      } else if (event.type === 'user/message') {
+        if (event.data?.source?.kind !== 'user') continue
+        const text = textOf(event.data).trim()
+        if (text !== '') messages.push({ role: 'user', source: { kind: 'user' }, content: [{ type: 'text', text }] })
+      } else if (event.type === 'assistant/message') {
+        const text = textOf(event.data?.message ?? event.data).trim()
+        if (text !== '') messages.push({ role: 'assistant', source: { kind: 'model' }, content: [{ type: 'text', text }] })
+      }
+      if (messages.length >= config.historyMessages && route !== undefined) break
+    }
+    messages.reverse()
+    return {
+      history: selectHistory(messages, bounds),
+      route,
+      seq: typeof observed.cursor === 'number'
+        ? observed.cursor
+        : (events.length === 0 ? 0 : events[events.length - 1].seq ?? events.length),
+    }
+  } catch (error) {
+    if (signal.aborted) throw error
+    return null
+  } finally {
+    try {
+      observed?.[Symbol.dispose]?.()
+    } catch (_error) {
+      // A lease disposal failure cannot change the answer already produced.
+    }
+  }
+}
+
+/**
+ * Produce one prediction for a session.
  * @param {object} ctx - Host context.
  * @param {object} config - validated live plugin configuration.
  * @param {string} sessionId - addressed session.
@@ -76,26 +154,21 @@ function leastEffort(controls, model) {
  */
 async function predict(ctx, config, sessionId, signal, cache) {
   if (config.enabled.get() !== true) return null
-  const session = ctx.sessions.get(sessionId)
-  if (session === undefined) return null
-
-  const history = selectHistory(session.deriveMessages(), {
-    historyMessages: config.historyMessages,
-    maxInputChars: config.maxInputChars,
-  })
+  const source = await readHistory(ctx, sessionId, config, signal)
+  if (source === null) return null
+  const { history } = source
   // A prediction follows an assistant reply; anything else is not a next-message state.
   if (history.length === 0 || history[history.length - 1].role !== 'assistant') return null
 
-  const header = session.requestHeader()
   const route = resolveRoute(
     { provider: config.provider.get(), model: config.model.get() },
-    header?.config,
+    source.route,
   )
   if (route === null) return null
 
   const cacheKey = `${sessionId}\0${route.provider}\0${route.model}`
   const cached = cache.get(cacheKey)
-  if (cached !== undefined && cached.seq === session.seq && Date.now() - cached.at < CACHE_TTL_MS) {
+  if (cached !== undefined && cached.seq === source.seq && Date.now() - cached.at < CACHE_TTL_MS) {
     return cached.text
   }
 
@@ -120,7 +193,7 @@ async function predict(ctx, config, sessionId, signal, cache) {
   const text = cleanPrediction(raw, config.maxPredictionChars)
   if (text === null) return null
   cache.delete(cacheKey)
-  cache.set(cacheKey, { seq: session.seq, at: Date.now(), text })
+  cache.set(cacheKey, { seq: source.seq, at: Date.now(), text })
   while (cache.size > CACHE_LIMIT) {
     const oldest = cache.keys().next().value
     if (oldest === undefined) break

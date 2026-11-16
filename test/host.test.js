@@ -6,7 +6,7 @@ const user = text => ({ role: 'user', source: { kind: 'user' }, content: [{ type
 const assistant = text => ({ role: 'assistant', source: { kind: 'model' }, content: [{ type: 'text', text }] })
 
 /** Minimal Host context: real route objects, fake sessions, LLM, and connection. */
-function harness({ reply = 'run the tests', input = {}, messages, header } = {}) {
+function harness({ reply = 'run the tests', input = {}, messages, header, live = true, sessionQuery } = {}) {
   const routes = new Map()
   const calls = []
   const session = {
@@ -31,8 +31,9 @@ function harness({ reply = 'run the tests', input = {}, messages, header } = {})
         },
       },
     },
+    get: name => (name === 'sessionQuery' ? sessionQuery : undefined),
     sessions: {
-      get: id => (id === 's1' ? session : undefined),
+      get: id => (live && id === 's1' ? session : undefined),
     },
     llm: {
       listProviders: () => [{ id: 'deepseek-official', name: 'DeepSeek' }],
@@ -108,6 +109,36 @@ test('predict route stays silent when no model route is known', async () => {
   const { routes, calls } = harness({ header: { config: {} } })
   assert.equal((await predict(routes, { sessionId: 's1' })).body.text, null)
   assert.equal(calls.length, 0)
+})
+
+test('predicts from a cold session through Session Query', async () => {
+  let disposed = false
+  const events = [
+    { seq: 1, type: 'user/message', data: user('fix the build') },
+    { seq: 2, type: 'assistant/message', data: { message: assistant('The build fails on a missing import.') } },
+    {
+      seq: 3,
+      type: 'request/header',
+      data: { header: { config: { provider: 'opencode-go', model: 'deepseek-v4.1-flash' } } },
+    },
+  ]
+  const { routes, calls } = harness({
+    live: false,
+    sessionQuery: {
+      observeSession: async () => ({
+        events,
+        cursor: 3,
+        [Symbol.dispose]() { disposed = true },
+      }),
+    },
+  })
+  const { status, body } = await predict(routes, { sessionId: 's1' })
+  assert.equal(status, 200)
+  assert.equal(body.text, 'run the tests')
+  assert.equal(disposed, true)
+  assert.equal(calls.length, 1)
+  assert.equal(calls[0].config.provider, 'opencode-go')
+  assert.equal(calls[0].config.model, 'deepseek-v4.1-flash')
 })
 
 test('model catalog route groups provider models', async () => {
