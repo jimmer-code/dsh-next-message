@@ -66,6 +66,16 @@ async function predict(routes, body) {
   return { status: response.status, body: await response.json() }
 }
 
+test('editable configuration fields are live volatile references', () => {
+  const config = Config({})
+  for (const field of ['enabled', 'provider', 'model', 'placement']) {
+    assert.equal(typeof config[field].get, 'function', `${field} is volatile`)
+  }
+  assert.equal(config.enabled.get(), true)
+  assert.equal(config.placement.get(), 'inline')
+  assert.equal(config.maxOutputTokens, 96)
+})
+
 test('predict route answers with the cleaned model line', async () => {
   const { routes, calls } = harness({ reply: '  "fix the import"\nextra' })
   const { status, body } = await predict(routes, { sessionId: 's1' })

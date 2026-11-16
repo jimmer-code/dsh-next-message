@@ -52,8 +52,35 @@ on them.
 ## Install
 
 In DSH open **Plugins → Add plugin** and point it at this directory (or a
-published package name), then refresh the page. The bundle stays enabled across
-restarts; the Host row id is `next-message`.
+published package name). Reload the page; if the bundle was installed while DSH
+was already running and its settings page does not appear, restart DSH once so
+the client module graph includes it. The bundle stays enabled across restarts;
+the Host row id is `next-message`.
+
+## How it works
+
+The browser half registers three entries: `conversation.input.overlay` (the
+ghost text and its request lifecycle), `conversation.composer.dock` (the
+optional bar), and `plugins.bundle.config` (the settings page). After a turn
+ends it sends `{ sessionId }` to the Host's authenticated
+`POST /api/next-message/predict`; the Host reads the session's derived messages,
+asks `ctx.llm` for one line, cleans it, and returns it. Tab calls the public
+`InputActions.insertText` with a captured insertion span, so the fill is one
+undoable edit and never a send.
+
+## Troubleshooting
+
+- **The settings page does not appear** — reload DSH; if the bundle was
+  installed into a running DSH, restart it once. Check that the bundle is
+  enabled under Plugins.
+- **No suggestion appears** — the composer must be empty, the turn finished,
+  and the session must not be the blank home or a subagent chat. Check
+  **Enable prediction**, then try **Placement → Below the composer**.
+- **The inline ghost is misaligned** — DSH changed the composer's internal
+  placeholder markers; switch Placement to Below. The Host row id is
+  `next-message`, and the same id names the settings namespace.
+- **The model setting cannot be saved** — the settings document must be
+  writable; DSH reports read-only profiles in the page.
 
 ## Development
 
