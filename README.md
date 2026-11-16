@@ -9,10 +9,32 @@
 把下面整段复制给能执行命令、能操作 DSH 插件页的 AI 助手：
 
 ```text
-请帮我把 https://github.com/jimmer-code/dsh-next-message 这个 DeepSeek Harness 插件装好：git clone 到工作区，进入目录运行 npm install、npm test、npm run check；然后在 DSH 的「插件 → 添加插件」里选择这个本地目录，启用 dsh-next-message 插件包；如果设置页没出现就重启一次 DSH；最后确认「插件 → dsh-next-message」里有「启用预测 / 预测模型 / 显示位置」三项，并且空输入框在回合结束后能出现建议、按 Tab 能填入。
+请帮我把 DeepSeek Harness 插件 dsh-next-message 装好：在 DSH 的「插件 → 添加插件」里填 github:jimmer-code/dsh-next-message 并安装，确认 dsh-next-message 插件包已启用；刷新页面，如果设置页没出现就重启一次 DSH；最后确认「插件 → dsh-next-message」里有「启用预测 / 预测模型 / 显示位置」三项，并且空输入框在回合结束后能出现建议、按 Tab 能填入。
 ```
 
-## 手动安装
+## 安装
+
+### 桌面版（推荐）
+
+打开「插件 → 添加插件」，在输入框里填：
+
+```text
+github:jimmer-code/dsh-next-message
+```
+
+点安装。DSH 会用 pnpm 安装这个包，并自动把 `dsh-next-message` 加进当前 profile 的插件包列表（通常也会自动启用）。装完刷新页面；如果设置页没出现，重启一次 DSH。
+
+### 命令行 / Web profile
+
+```sh
+dsh plugin --profile <profile> add github:jimmer-code/dsh-next-message
+```
+
+`dsh plugin` 会把参数转发给 profile 目录里的 pnpm，并根据安装结果自动更新 `dsh.profile.bundles`。Desktop 的 profile 由桌面应用管理，不能用 CLI 装，请用上面的「插件 → 添加插件」。
+
+### 本地开发安装
+
+如果改的是这个仓库的源码，而不是装已发布的包：
 
 ```sh
 git clone https://github.com/jimmer-code/dsh-next-message.git
@@ -22,7 +44,21 @@ npm test
 npm run check
 ```
 
-装好后在 DSH 里打开「插件 → 添加插件」，选择这个本地目录。刷新页面；如果设置页没有出现，重启一次 DSH。
+然后在「插件 → 添加插件」里选择这个本地目录。通过链接安装的 checkout 会保留自己的 `node_modules`，所以本地开发要先 `npm install`。
+
+### 从 npm 安装（尚未发布）
+
+发布到 npm 之后可以：
+
+```sh
+dsh plugin --profile <profile> add dsh-next-message
+```
+
+或在「插件 → 添加插件」里填包名 `dsh-next-message`。
+
+### 为什么 Git 安装不用先构建
+
+仓库里提交了构建好的 `lib/client.js`，并且没有 `prepare` 脚本，所以 pnpm 从 GitHub 安装时不需要额外的构建授权；DSH 直接加载预构建产物。
 
 ## 功能
 
