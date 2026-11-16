@@ -38,7 +38,7 @@ Host 侧按“会话 + 模型 + 会话日志长度”缓存 2 分钟，避免同
 - id: next-message
   name: dsh-next-message
   config:
-    maxOutputTokens: 48
+    maxOutputTokens: 96
     timeoutMs: 8000
     historyMessages: 10
     maxInputChars: 5000
