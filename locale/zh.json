@@ -1,0 +1,23 @@
+{
+  "meta": {
+    "title": "下一条消息推测",
+    "description": "在输入框里显示根据对话推测的下一条消息，按 Tab 填入。默认跟随当前会话的模型，可单独指定更便宜的模型。",
+    "detail": "docs/DETAIL.md"
+  },
+  "title": "下一条消息推测",
+  "description": "空闲且输入框为空时，根据对话推测你接下来可能发送的消息。按 Tab 填入草稿，不会自动发送。",
+  "enabled": "启用推测",
+  "enabledHint": "每个回合结束后，在空输入框里显示一条建议。",
+  "model": "推测模型",
+  "modelHint": "默认跟随当前会话使用的模型；也可以固定成一个更快、更便宜的模型。",
+  "follow": "跟随当前会话",
+  "placement": "显示位置",
+  "placementInline": "输入框内（灰色 ghost 文字）",
+  "placementBelow": "输入框下方（一条建议栏）",
+  "saved": "已保存",
+  "saveFailed": "保存失败，请重试",
+  "loading": "正在读取配置…",
+  "unavailable": "配置暂不可用，确认插件已启用且 DSH 已完成加载。",
+  "readOnly": "当前配置不可写。",
+  "suggestion": "预测"
+}

@@ -1,0 +1,8 @@
+# dsh-next-message bundle patch
+#
+# One Host row serves the prediction and model-catalog routes. The browser
+# bundle declared by `dsh.client` draws the ghost suggestion in the composer
+# and contributes the settings page under Plugins → dsh-next-message.
+- insert:
+    - id: next-message
+      name: 'dsh-next-message'

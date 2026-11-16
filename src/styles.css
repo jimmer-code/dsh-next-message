@@ -1,0 +1,205 @@
+/* dsh-next-message: composer ghost text and bundle settings page. */
+
+.dsh-nm-anchor {
+  display: contents;
+}
+
+/* Inline ghost text. Absolute coordinates are measured from the composer card
+   and applied inline; this rule owns typography, masking, and the keycap. */
+.dsh-nm-ghost {
+  position: absolute;
+  z-index: 4;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--dsw-alias-label-tertiary);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* Opaque patch over the composer placeholder so only the suggestion shows. */
+.dsh-nm-ghost::before {
+  content: '';
+  position: absolute;
+  inset: -2px -6px;
+  z-index: -1;
+  border-radius: 6px;
+  background: var(--dsw-specific-input-major, var(--dsw-alias-bg-module-platform));
+}
+
+.dsh-nm-ghost-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dsh-nm-key {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  height: 16px;
+  padding: 0 5px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 5px;
+  background: var(--dsw-alias-bg-module-platform);
+  color: var(--dsw-alias-label-caption);
+  font-family: inherit;
+  font-size: 10.5px;
+  line-height: 14px;
+  letter-spacing: 0.01em;
+}
+
+.dsh-nm-key-button {
+  cursor: pointer;
+}
+
+.dsh-nm-key-button:hover {
+  color: var(--dsw-alias-label-primary);
+}
+
+/* Below-composer suggestion bar, rendered in the composer dock. */
+.dsh-nm-bar {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+  height: 22px;
+  padding: 0 2px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.dsh-nm-bar-label {
+  flex: none;
+  color: var(--dsw-alias-label-caption);
+  font-size: 11px;
+}
+
+.dsh-nm-bar-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Settings page under Plugins -> dsh-next-message. */
+.dsh-nm-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dsh-nm-settings-desc {
+  margin: 0;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 12.5px;
+  line-height: 19px;
+}
+
+.dsh-nm-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.dsh-nm-row-text {
+  min-width: 0;
+}
+
+.dsh-nm-row-label {
+  color: var(--dsw-alias-label-primary);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.dsh-nm-row-hint {
+  margin-top: 1px;
+  color: var(--dsw-alias-label-caption);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.dsh-nm-select {
+  flex: none;
+  max-width: 280px;
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 8px;
+  background: var(--dsw-alias-bg-module-platform);
+  color: var(--dsw-alias-label-primary);
+  font: inherit;
+  font-size: 12.5px;
+}
+
+.dsh-nm-select:focus-visible {
+  outline: 2px solid var(--dsw-alias-state-business-primary);
+  outline-offset: 1px;
+}
+
+.dsh-nm-switch {
+  flex: none;
+  box-sizing: border-box;
+  width: 36px;
+  height: 20px;
+  padding: 2px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--dsw-alias-border-l2);
+  cursor: pointer;
+  transition: background 140ms ease;
+}
+
+.dsh-nm-switch[aria-checked='true'] {
+  background: var(--dsw-alias-state-business-primary);
+}
+
+.dsh-nm-switch:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.dsh-nm-switch:focus-visible {
+  outline: 2px solid var(--dsw-alias-state-business-primary);
+  outline-offset: 2px;
+}
+
+.dsh-nm-switch-knob {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 18%);
+  transition: transform 140ms ease;
+}
+
+.dsh-nm-switch[aria-checked='true'] .dsh-nm-switch-knob {
+  transform: translateX(16px);
+}
+
+.dsh-nm-settings-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 18px;
+}
+
+.dsh-nm-settings-status {
+  color: var(--dsw-alias-label-caption);
+  font-size: 12px;
+}
+
+.dsh-nm-settings-note {
+  margin: 0;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 12.5px;
+  line-height: 19px;
+}
