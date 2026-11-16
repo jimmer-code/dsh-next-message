@@ -17,6 +17,9 @@ the draft. Nothing is sent automatically.
   typing anything hides it.
 - Never appends to the session log, never sends a message, and shows no errors
   in the composer when a prediction fails.
+- Keeps the composer editable while the suggestion shows: the caret stays
+  visible, typing clears the suggestion, and clicking the suggestion focuses
+  the input again.
 
 ## Settings
 

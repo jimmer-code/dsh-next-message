@@ -49,6 +49,10 @@ test('bundle has no unsubstituted build placeholders', () => {
   assert.equal(bundle.includes('__NM_CSS__'), false)
   assert.equal(bundle.includes('__NM_LOCALES__'), false)
   assert.equal(bundle.includes('window.__ModuleLoader__.load'), true)
+  // The ghost must leave the real caret visible and keep the composer editable.
+  assert.match(bundle, /:has\(\.dsh-nm-ghost\)/)
+  assert.match(bundle, /cursor: text/)
+  assert.match(bundle, /focus\(\{ preventScroll: true \}\)/)
 })
 
 test('client module registers the three intended slots', () => {

@@ -131,7 +131,7 @@ function create(require) {
    */
   function focusEditor(card) {
     const editor = card?.querySelector('[contenteditable="true"]')
-    if (editor instanceof HTMLElement) editor.focus()
+    if (editor instanceof HTMLElement) editor.focus({ preventScroll: true })
   }
 
   /**
@@ -247,6 +247,22 @@ function create(require) {
       }
     }, [prediction.status, prediction.text, sessionId])
 
+    // DSH may leave focus on the send/stop button (or the body) after a turn.
+    // Put the caret back in the editor when the suggestion appears, but never
+    // take focus away from the transcript, another editable control, or a
+    // panel the user moved to.
+    useEffect(() => {
+      if (prediction.status !== 'ready') return
+      const card = anchor.current?.closest(CARD)
+      if (card === null || card === undefined) return
+      const active = document.activeElement
+      const editable = active instanceof HTMLElement
+        && (active.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(active.tagName))
+      if (editable) return
+      if (active !== null && active !== document.body && !(active instanceof Element && card.contains(active))) return
+      focusEditor(card)
+    }, [prediction.status, sessionId])
+
     useEffect(() => {
       if (prediction.status !== 'ready') return undefined
       const root = anchor.current
@@ -284,6 +300,13 @@ function create(require) {
           className: 'dsh-nm-ghost',
           style: { top: rect.top, left: rect.left, width: rect.width, height: rect.height },
           'aria-hidden': 'true',
+          // The ghost sits over the editor's placeholder line. A click focuses
+          // the editor instead of landing on the overlay, so the caret appears
+          // and the draft stays editable while the suggestion is shown.
+          onMouseDown: (event) => {
+            event.preventDefault()
+            focusEditor(event.currentTarget.closest(CARD))
+          },
         },
         h('span', { className: 'dsh-nm-ghost-text' }, prediction.text),
         h('kbd', { className: 'dsh-nm-key' }, 'Tab'))

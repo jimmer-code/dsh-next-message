@@ -15,21 +15,19 @@
   gap: 8px;
   min-width: 0;
   color: var(--dsw-alias-label-tertiary);
-  pointer-events: none;
+  cursor: text;
   white-space: nowrap;
 }
 
-/* Opaque patch over the composer placeholder so only the suggestion shows. */
-.dsh-nm-ghost::before {
-  content: '';
-  position: absolute;
-  inset: -2px -6px;
-  z-index: -1;
-  border-radius: 6px;
-  background: var(--dsw-specific-input-major, var(--dsw-alias-bg-module-platform));
+/* The placeholder sits behind the suggestion. Hiding it keeps the real caret
+   visible at the text origin, so the composer still reads as an active input. */
+[data-composer-card]:has(.dsh-nm-ghost) [data-composer-placeholder] {
+  visibility: hidden;
 }
 
 .dsh-nm-ghost-text {
+  /* Leave the 1px caret visible at the text origin while the ghost shows. */
+  padding-left: 2px;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
