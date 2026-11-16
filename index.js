@@ -31,7 +31,7 @@ export const Config = z.object({
   /** Where the suggestion renders: inside the composer or as a bar below it. */
   placement: z.union(['inline', 'below']).default('inline').volatile(),
   /** Output-token cap; a prediction is one short line. */
-  maxOutputTokens: z.number().step(1).min(1).max(4096).default(48),
+  maxOutputTokens: z.number().step(1).min(1).max(4096).default(96),
   /** End-to-end deadline for the auxiliary request. */
   timeoutMs: z.number().step(1).min(100).max(60000).default(8000),
   /** How many recent messages enter the prompt. */

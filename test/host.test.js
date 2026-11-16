@@ -74,7 +74,7 @@ test('predict route answers with the cleaned model line', async () => {
   assert.equal(calls.length, 1)
   assert.equal(calls[0].config.provider, 'deepseek-official')
   assert.equal(calls[0].config.model, 'deepseek-v4.1-flash')
-  assert.equal(calls[0].config.maxTokens, 48)
+  assert.equal(calls[0].config.maxTokens, 96)
 })
 
 test('predict route rejects a missing or malformed session id', async () => {
