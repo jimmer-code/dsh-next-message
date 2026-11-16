@@ -6,7 +6,7 @@
   "enabled": "Enable prediction",
   "model": "Prediction model",
   "follow": "Follow session",
-  "placement": "Placement",
+  "placement": "Desktop placement",
   "placementInline": "Inline",
   "placementBelow": "Below",
   "saved": "Saved",
@@ -14,5 +14,8 @@
   "loading": "Reading configuration…",
   "unavailable": "Configuration unavailable",
   "readOnly": "Read-only",
-  "suggestion": "Prediction"
+  "suggestion": "Prediction",
+  "fill": "Fill",
+  "dismiss": "Dismiss suggestion",
+  "mobileToggle": "Predict"
 }

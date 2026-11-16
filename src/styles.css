@@ -81,9 +81,100 @@
 
 .dsh-nm-bar-text {
   min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.dsh-nm-bar-actions {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+}
+
+.dsh-nm-bar-close {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--dsw-alias-label-caption);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.dsh-nm-bar-close:hover {
+  color: var(--dsw-alias-label-primary);
+}
+
+/* Composer-toolbar toggle, shown only on touch layouts. */
+.dsh-nm-mobile-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.dsh-nm-mobile-toggle[aria-pressed='true'] {
+  border-color: var(--dsw-alias-state-business-primary);
+  background: var(--dsw-alias-state-business-tertiary);
+  color: var(--dsw-alias-state-business-primary);
+}
+
+.dsh-nm-mobile-toggle:focus-visible {
+  outline: 2px solid var(--dsw-alias-state-business-primary);
+  outline-offset: 1px;
+}
+
+.dsh-nm-mobile-toggle svg {
+  flex: none;
+}
+
+@media (pointer: coarse) {
+  .dsh-nm-bar {
+    height: 32px;
+    gap: 6px;
+  }
+
+  .dsh-nm-bar-label {
+    display: none;
+  }
+
+  .dsh-nm-bar-text {
+    min-height: 26px;
+  }
+
+  .dsh-nm-key,
+  .dsh-nm-bar-close {
+    height: 26px;
+  }
+
+  .dsh-nm-bar-close {
+    width: 26px;
+  }
 }
 
 /* Settings page under Plugins -> dsh-next-message. */

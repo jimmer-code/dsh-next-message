@@ -31,6 +31,7 @@ function create(require) {
   const CARD = '[data-composer-card]'
   const PLACEHOLDER = '[data-composer-placeholder]'
   const SCROLL = '[data-input-scroll]'
+  const MOBILE_KEY = 'dsh-next-message:mobile-enabled'
 
   const IDLE = Object.freeze({ status: 'idle', text: '', dismissed: false })
 
@@ -88,6 +89,56 @@ function create(require) {
       })
     }, [sessionId])
     return state
+  }
+
+  /** Whether this device opted into predictions; persisted per browser origin. */
+  function readMobileEnabled() {
+    try {
+      const raw = window.localStorage.getItem(MOBILE_KEY)
+      return raw === null ? true : raw !== '0'
+    } catch (_error) {
+      return true
+    }
+  }
+
+  let mobileEnabled = readMobileEnabled()
+  const mobileListeners = new Set()
+
+  /**
+   * Persist the per-device mobile preference and notify every mounted view.
+   * @param {boolean} value - whether mobile predictions are on.
+   */
+  function setMobileEnabled(value) {
+    const next = value === true
+    if (next === mobileEnabled) return
+    mobileEnabled = next
+    try {
+      window.localStorage.setItem(MOBILE_KEY, next ? '1' : '0')
+    } catch (_error) {
+      // Storage can be unavailable in private or embedded webviews.
+    }
+    for (const listener of [...mobileListeners]) {
+      try {
+        listener()
+      } catch (_error) {
+        // One failing view must not strand the others.
+      }
+    }
+  }
+
+  /**
+   * Subscribe to the per-device mobile preference.
+   * @returns {boolean} whether mobile predictions are on.
+   */
+  function useMobileEnabled() {
+    const [value, setValue] = useState(mobileEnabled)
+    useEffect(() => {
+      setValue(mobileEnabled)
+      const listener = () => setValue(mobileEnabled)
+      mobileListeners.add(listener)
+      return () => { mobileListeners.delete(listener) }
+    }, [])
+    return value
   }
 
   /**
@@ -150,6 +201,7 @@ function create(require) {
     const phase = useInput(state => state.phase)
     const attachments = useInput(state => state.attachmentIds.length)
     const prediction = usePrediction(sessionId)
+    const mobileEnabled = useMobileEnabled()
     const anchor = useRef(null)
     const armed = useRef(true)
     const sessionRef = useRef(sessionId)
@@ -164,6 +216,15 @@ function create(require) {
       setRect(null)
     }, [sessionId])
 
+    // Enabling mobile predictions should ask once without waiting for the next
+    // turn when no usable suggestion is cached already.
+    useEffect(() => {
+      if (!coarsePointer() || !mobileEnabled) return
+      const current = predictionOf(sessionId)
+      if (current.status === 'ready' && !current.dismissed) return
+      armed.current = true
+    }, [mobileEnabled, sessionId])
+
     useEffect(() => {
       if (running) {
         armed.current = true
@@ -171,7 +232,8 @@ function create(require) {
         return undefined
       }
       const blocked = !settings.enabled || blank || subagent
-        || draft !== '' || attachments > 0 || phase !== 'plain' || coarsePointer()
+        || (coarsePointer() && !mobileEnabled)
+        || draft !== '' || attachments > 0 || phase !== 'plain'
       if (blocked) {
         // Typing during an in-flight request aborts it; let the next free,
         // empty composer ask again instead of leaving a loading placeholder.
@@ -179,7 +241,9 @@ function create(require) {
           armed.current = true
           publishPrediction(sessionId, IDLE)
         }
-        if (!settings.enabled || blank || subagent) publishPrediction(sessionId, IDLE)
+        if (!settings.enabled || blank || subagent || (coarsePointer() && !mobileEnabled)) {
+          publishPrediction(sessionId, IDLE)
+        }
         return undefined
       }
       if (!armed.current) return undefined
@@ -215,7 +279,7 @@ function create(require) {
         clearTimeout(timer)
         controller.abort()
       }
-    }, [settings.enabled, running, blank, subagent, draft, attachments, phase, sessionId])
+    }, [settings.enabled, running, blank, subagent, mobileEnabled, draft, attachments, phase, sessionId])
 
     useLayoutEffect(() => {
       if (prediction.status !== 'ready' || prediction.dismissed
@@ -263,7 +327,7 @@ function create(require) {
     // take focus away from the transcript, another editable control, or a
     // panel the user moved to.
     useEffect(() => {
-      if (prediction.status !== 'ready' || prediction.dismissed) return
+      if (coarsePointer() || prediction.status !== 'ready' || prediction.dismissed) return
       const card = anchor.current?.closest(CARD)
       if (card === null || card === undefined) return
       const active = document.activeElement
@@ -312,7 +376,7 @@ function create(require) {
       return () => { card.removeEventListener('keydown', onKeyDown) }
     }, [prediction.status, prediction.text, prediction.dismissed, sessionId, inputActions])
 
-    const visible = settings.enabled && settings.placement === 'inline'
+    const visible = settings.enabled && !coarsePointer() && settings.placement === 'inline'
       && prediction.status === 'ready' && !prediction.dismissed
       && draft === '' && attachments === 0 && phase === 'plain'
       && rect !== null
@@ -346,10 +410,14 @@ function create(require) {
     const snapshot = useConfigForm(form)
     const settings = presentationOf(snapshot)
     const prediction = usePrediction(sessionId)
+    const mobileEnabled = useMobileEnabled()
+    const touch = coarsePointer()
     const draft = useInput(state => state.draft)
     const phase = useInput(state => state.phase)
     const attachments = useInput(state => state.attachmentIds.length)
-    if (!settings.enabled || settings.placement !== 'below' || prediction.status !== 'ready') return null
+    const enabledHere = settings.enabled && (!touch || mobileEnabled)
+    const placementOk = touch ? true : settings.placement === 'below'
+    if (!enabledHere || !placementOk || prediction.status !== 'ready') return null
     if (prediction.dismissed || draft !== '' || phase !== 'plain' || attachments > 0) return null
     const accept = (event) => {
       event.preventDefault()
@@ -358,10 +426,66 @@ function create(require) {
       inputActions.setDraft(prediction.text)
       focusEditor(card)
     }
+    const dismiss = (event) => {
+      event.preventDefault()
+      publishPrediction(sessionId, {
+        status: 'ready',
+        text: prediction.text,
+        dismissed: true,
+      })
+    }
     return h('div', { className: 'dsh-nm-bar' },
       h('span', { className: 'dsh-nm-bar-label' }, t('suggestion')),
-      h('span', { className: 'dsh-nm-bar-text' }, prediction.text),
-      h('button', { type: 'button', className: 'dsh-nm-key dsh-nm-key-button', onMouseDown: accept }, 'Tab'))
+      h('button', { type: 'button', className: 'dsh-nm-bar-text', onMouseDown: accept }, prediction.text),
+      h('span', { className: 'dsh-nm-bar-actions' },
+        h('button', {
+          type: 'button',
+          className: 'dsh-nm-key dsh-nm-key-button',
+          onMouseDown: accept,
+        }, touch ? t('fill') : 'Tab'),
+        touch
+          ? h('button', {
+            type: 'button',
+            className: 'dsh-nm-bar-close',
+            'aria-label': t('dismiss'),
+            onMouseDown: dismiss,
+          }, '×')
+          : null))
+  }
+
+  /**
+   * Composer-toolbar toggle for phone and tablet layouts. Hidden on desktop.
+   * The preference is per browser origin, so the phone can differ from desktop.
+   * @param {any} props - slot props.
+   * @returns {any} the slot content.
+   */
+  function MobileToggle(props) {
+    const { sessionId, form, t } = props
+    const snapshot = useConfigForm(form)
+    const settings = presentationOf(snapshot)
+    const mobileEnabled = useMobileEnabled()
+    if (!coarsePointer() || !settings.enabled) return null
+    const toggle = (event) => {
+      event.preventDefault()
+      const next = !mobileEnabled
+      setMobileEnabled(next)
+      if (!next) publishPrediction(sessionId, IDLE)
+    }
+    return h('button', {
+      type: 'button',
+      className: 'dsh-nm-mobile-toggle',
+      'aria-label': t('mobileToggle'),
+      'aria-pressed': mobileEnabled,
+      title: t('mobileToggle'),
+      onMouseDown: (event) => { event.preventDefault() },
+      onClick: toggle,
+    },
+    h('svg', { viewBox: '0 0 16 16', width: 13, height: 13, 'aria-hidden': true },
+      h('path', {
+        d: 'M8 1.6 9.55 6.45 14.4 8 9.55 9.55 8 14.4 6.45 9.55 1.6 8 6.45 6.45Z',
+        fill: 'currentColor',
+      })),
+    h('span', { className: 'dsh-nm-mobile-toggle-text' }, t('mobileToggle')))
   }
 
   /**
@@ -521,6 +645,14 @@ function create(require) {
       locale: NS,
       inject: injected,
     }, BelowSuggestion))
+
+    ctx.slots.inject('conversation.input.right', () => ctx.slots.register({
+      name: 'conversation.input.right',
+      id: 'next-message-mobile-toggle',
+      order: 10,
+      locale: NS,
+      inject: injected,
+    }, MobileToggle))
 
     ctx.slots.inject('plugins.bundle.config', () => ctx.slots.register({
       name: 'plugins.bundle.config',

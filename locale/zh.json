@@ -7,7 +7,7 @@
   "enabled": "启用预测",
   "model": "预测模型",
   "follow": "跟随当前会话",
-  "placement": "显示位置",
+  "placement": "桌面显示位置",
   "placementInline": "输入框内",
   "placementBelow": "下方",
   "saved": "已保存",
@@ -15,5 +15,8 @@
   "loading": "正在读取配置…",
   "unavailable": "配置暂不可用",
   "readOnly": "只读",
-  "suggestion": "预测"
+  "suggestion": "预测",
+  "fill": "填入",
+  "dismiss": "关闭建议",
+  "mobileToggle": "预测"
 }
